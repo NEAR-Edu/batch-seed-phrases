@@ -4,21 +4,39 @@ import Head from 'next/head';
 // @ts-ignore
 import { generateSeedPhrase } from 'near-seed-phrase'; // https://github.com/near/near-seed-phrase/blob/d0f7671261edba57c6fcb2768994c533a635fc55/index.js
 import * as nearAPI from 'near-api-js'; // https://docs.near.org/docs/api/naj-quick-reference#install
+import 'bootstrap/dist/css/bootstrap.css';
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
+import Tooltip from 'react-bootstrap/Tooltip';
 
 function uint8toHex(uint8Array: Uint8Array) {
   // TODO: Confirm that this is correct. Also, why is this not part of the near-seed-phrase library?
   return Buffer.from(uint8Array).toString('hex');
 }
 
+function wordWithTooltip(word: string, index: number): JSX.Element {
+  function renderTooltip(props: any) {
+    return (
+      <Tooltip {...props}>
+        <div>Word #</div>
+        <div>{(index + 1).toString()}</div>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <>
+      <OverlayTrigger key={index} placement="top" overlay={renderTooltip}>
+        <span className="word">{word}</span>
+      </OverlayTrigger>{' '}
+      {/* The space is important so that the words are separate when copying and pasting. */}
+    </>
+  );
+}
+
 function WordByWord({ seedPhrase }: { seedPhrase: string }): JSX.Element {
   const words = seedPhrase.split(' ');
   const wordsWithTooltips = words.map((word: string, index: number) => {
-    const tooltip = `${(index + 1).toString()} (Word #)`; // TODO: Use something like https://cedricdelpoux.github.io/react-simple-tooltip/
-    return (
-      <span key={index} title={tooltip}>
-        {word}{' '}
-      </span>
-    );
+    return wordWithTooltip(word, index);
   });
   return <>{wordsWithTooltips}</>;
 }

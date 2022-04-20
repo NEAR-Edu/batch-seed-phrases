@@ -22,3 +22,10 @@ table {
     padding: 6px;
   }
 }
+
+.word {
+  padding: 3px;
+  &:hover {
+    background-color: yellow;
+  }
+}
