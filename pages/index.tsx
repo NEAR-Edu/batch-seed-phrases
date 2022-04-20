@@ -14,8 +14,13 @@ const queryParamKey = 'n'; // E.g. use ?n=50 in the URL
 const defaultNumSeedPhrases = 20;
 
 function uint8toHex(uint8Array: Uint8Array) {
-  // TODO: Confirm that this is correct. Also, why is this not part of the near-seed-phrase library?
+  // TODO: Confirm that this is correct. Also, why is this not part of the near-seed-phrase library and the near-api-js library?
   return Buffer.from(uint8Array).toString('hex');
+}
+
+function getAccountId(publicKey: string): string {
+  // TODO: Confirm that this is correct. Also, why is this not part of the near-seed-phrase library and the near-api-js library?
+  return uint8toHex(nearAPI.utils.PublicKey.fromString(publicKey).data); // https://docs.near.org/docs/roles/integrator/implicit-accounts#converting-a-public-key-to-an-account-id
 }
 
 function wordWithTooltip(word: string, index: number): JSX.Element {
@@ -65,7 +70,7 @@ function generateSeedPhrases(num: number): SeedPhraseObject[] {
   for (let i = 1; i <= num; i += 1) {
     const { seedPhrase, secretKey, publicKey } = generateSeedPhrase();
     console.log({ seedPhrase });
-    const accountId = uint8toHex(nearAPI.utils.PublicKey.fromString(publicKey).data); // https://docs.near.org/docs/roles/integrator/implicit-accounts#converting-a-public-key-to-an-account-id
+    const accountId = getAccountId(publicKey);
     const seedPhraseObject = { i, seedPhrase, secretKey, publicKey, accountId };
     console.log({ seedPhraseObject });
     seedPhraseObjects.push(seedPhraseObject);
