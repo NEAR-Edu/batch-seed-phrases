@@ -20,6 +20,15 @@ table {
   td {
     border: 1px solid #ccc;
     padding: 6px;
+    &.clip {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 3rem;
+    }
+  }
+  tr:nth-child(even) td {
+    background-color: hsl(0deg 0% 93%);
   }
 }
 

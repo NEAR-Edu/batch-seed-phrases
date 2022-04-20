@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import type { NextPage } from 'next';
+import type { GetServerSideProps, NextPage } from 'next';
 import Head from 'next/head';
 // @ts-ignore
 import { generateSeedPhrase } from 'near-seed-phrase'; // https://github.com/near/near-seed-phrase/blob/d0f7671261edba57c6fcb2768994c533a635fc55/index.js
@@ -7,6 +6,12 @@ import * as nearAPI from 'near-api-js'; // https://docs.near.org/docs/api/naj-qu
 import 'bootstrap/dist/css/bootstrap.css';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Tooltip from 'react-bootstrap/Tooltip';
+
+type SeedPhraseObject = any;
+type PageProps = { seedPhraseObjects: SeedPhraseObject[] };
+
+const queryParamKey = 'n'; // E.g. use ?n=50 in the URL
+const defaultNumSeedPhrases = 20;
 
 function uint8toHex(uint8Array: Uint8Array) {
   // TODO: Confirm that this is correct. Also, why is this not part of the near-seed-phrase library?
@@ -24,12 +29,12 @@ function wordWithTooltip(word: string, index: number): JSX.Element {
   }
 
   return (
-    <>
+    <span key={index}>
       <OverlayTrigger key={index} placement="top" overlay={renderTooltip}>
         <span className="word">{word}</span>
       </OverlayTrigger>{' '}
       {/* The space is important so that the words are separate when copying and pasting. */}
-    </>
+    </span>
   );
 }
 
@@ -41,9 +46,8 @@ function WordByWord({ seedPhrase }: { seedPhrase: string }): JSX.Element {
   return <>{wordsWithTooltips}</>;
 }
 
-function SeedPhrase({ i }: { i: number }): JSX.Element {
-  const { seedPhrase, secretKey, publicKey } = generateSeedPhrase();
-  const accountId = uint8toHex(nearAPI.utils.PublicKey.fromString(publicKey).data); // https://docs.near.org/docs/roles/integrator/implicit-accounts#converting-a-public-key-to-an-account-id
+function SeedPhrase({ seedPhraseObject }: { seedPhraseObject: SeedPhraseObject }): JSX.Element {
+  const { i, seedPhrase, accountId } = seedPhraseObject;
   return (
     <tr>
       <td>{i}</td>
@@ -51,22 +55,39 @@ function SeedPhrase({ i }: { i: number }): JSX.Element {
       <td>
         <WordByWord seedPhrase={seedPhrase} />
       </td>
+      <td className="clip">{JSON.stringify(seedPhraseObject)}</td>
     </tr>
   );
 }
 
-function SeedPhrases({ num }: { num: number }): JSX.Element {
-  const seedPhrases = [];
+function generateSeedPhrases(num: number): SeedPhraseObject[] {
+  const seedPhraseObjects = [];
   for (let i = 1; i <= num; i += 1) {
-    seedPhrases.push(i);
+    const { seedPhrase, secretKey, publicKey } = generateSeedPhrase();
+    console.log({ seedPhrase });
+    const accountId = uint8toHex(nearAPI.utils.PublicKey.fromString(publicKey).data); // https://docs.near.org/docs/roles/integrator/implicit-accounts#converting-a-public-key-to-an-account-id
+    const seedPhraseObject = { i, seedPhrase, secretKey, publicKey, accountId };
+    console.log({ seedPhraseObject });
+    seedPhraseObjects.push(seedPhraseObject);
   }
-  const rows = seedPhrases.map((i, index) => <SeedPhrase key={index} i={i} />);
+  return seedPhraseObjects;
+}
+
+function SeedPhraseRows({ seedPhraseObjects }: { seedPhraseObjects: SeedPhraseObject[] }): JSX.Element {
+  const rows = seedPhraseObjects.map((seedPhraseObject: SeedPhraseObject, index: number) => <SeedPhrase key={index} seedPhraseObject={seedPhraseObject} />);
   return <>{rows}</>;
 }
 
-const Home: NextPage = () => {
-  // TODO: Fix "Hydration failed because the initial UI does not match what was rendered on the server" https://github.com/vercel/next.js/discussions/35773
-  const [numSeedPhrases, setNumSeedPhrases] = useState(5);
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const numSeedPhrases = Number(context.query[queryParamKey]) || defaultNumSeedPhrases;
+  const seedPhraseObjects = generateSeedPhrases(numSeedPhrases);
+  console.log({ numSeedPhrases, seedPhraseObjects });
+  return {
+    props: { seedPhraseObjects }, // will be passed to the page component as props
+  };
+};
+
+const Home: NextPage<PageProps> = ({ seedPhraseObjects }: PageProps) => {
   return (
     <div>
       <Head>
@@ -76,19 +97,17 @@ const Home: NextPage = () => {
       </Head>
 
       <main>
-        <label># of seed phrases:</label>{' '}
-        <input type="number" value={numSeedPhrases} onChange={(e) => setNumSeedPhrases(parseInt(e.target.value, 10))} maxLength={2} style={{ width: '3rem' }} />
-        <span style={{ color: 'red' }}>(Warning: Editing this number will cause the entire table below to be replaced immediately)</span>
         <table>
           <thead>
             <tr>
               <th>#</th>
               <th>Account Address</th>
               <th>Seed Phrase</th>
+              <th>JSON</th>
             </tr>
           </thead>
           <tbody>
-            <SeedPhrases num={numSeedPhrases} />
+            <SeedPhraseRows seedPhraseObjects={seedPhraseObjects} />
           </tbody>
         </table>
       </main>
