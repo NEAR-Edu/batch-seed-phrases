@@ -2,26 +2,17 @@ import type { GetServerSideProps, NextPage } from 'next';
 import Head from 'next/head';
 // @ts-ignore
 import { generateSeedPhrase } from 'near-seed-phrase'; // https://github.com/near/near-seed-phrase/blob/d0f7671261edba57c6fcb2768994c533a635fc55/index.js
-import * as nearAPI from 'near-api-js'; // https://docs.near.org/docs/api/naj-quick-reference#install
+
 import 'bootstrap/dist/css/bootstrap.css';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Tooltip from 'react-bootstrap/Tooltip';
+import { getAccountId } from '../helpers/near_utils';
 
 type SeedPhraseObject = any;
 type PageProps = { seedPhraseObjects: SeedPhraseObject[] };
 
 const queryParamKey = 'n'; // E.g. use ?n=50 in the URL
 const defaultNumSeedPhrases = 20;
-
-function uint8toHex(uint8Array: Uint8Array) {
-  // TODO: Confirm that this is correct. Also, why is this not part of the near-seed-phrase library and the near-api-js library?
-  return Buffer.from(uint8Array).toString('hex');
-}
-
-function getAccountId(publicKey: string): string {
-  // TODO: Confirm that this is correct. Also, why is this not part of the near-seed-phrase library and the near-api-js library?
-  return uint8toHex(nearAPI.utils.PublicKey.fromString(publicKey).data); // https://docs.near.org/docs/roles/integrator/implicit-accounts#converting-a-public-key-to-an-account-id
-}
 
 function wordWithTooltip(word: string, index: number): JSX.Element {
   function renderTooltip(props: any) {
