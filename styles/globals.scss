@@ -13,3 +13,12 @@ a {
 * {
   box-sizing: border-box;
 }
+
+table {
+  border-collapse: collapse;
+  th,
+  td {
+    border: 1px solid #ccc;
+    padding: 6px;
+  }
+}
